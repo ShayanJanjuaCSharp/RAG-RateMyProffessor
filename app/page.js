@@ -42,52 +42,70 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 export default function Home() {
   const [messages, setMessages] = useState([
     {
-      role:'Obi',
-      content:'Hello There. I am Obi, your go to for finding what you need to know about any professor.'
+      role: 'model',
+      content: 'Hello There. I am Obi, your go to for finding what you need to know about any professor.'
     }
-  ])
-  const [message, setMessage] = useState('')
+  ]);
+  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [aImage, setImage] = useState("/user.png");
+  const [aImage, setImage] = useState('/user.png');
 
-  const sendMessage = async() =>{
-    setIsLoading(true)
-    setMessages((messages) => [
-      ...messages,
-      {role:'user', content: message},
-      {role:'Obi', content:''}
-    ])
-    const response = fetch('api/chat',{
-      method:'POST',
-      headers:{
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify([...messages, {role:'user', content: message}])
-    }).then(async(res)=>{
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      
-      let result = ''
-      return reader.read().then(function processText({done, value}){
-        if(done){
-          return result
-        }
-        const text = decoder.decode(value || new Uint8Array(), {stream: true})
-        setMessages((messages) =>{
-          let lastm = messages[messages.length-1]
-          let om = messages.slice(0, messages.length-2)
-          return [
-            ...om,
-            {...lastm, content: lastm.content = text},
-          ]
-        })
+  const sendMessage = async () => {
+    setIsLoading(true);
+  
+    const messagesToSend = [...messages.slice(1), { role: 'user', content: message }];
+  
+    const formattedMessages = messagesToSend.map((msg) => ({
+      role: msg.role,
+      parts: [{ text: msg.content }], 
+    }));
+  
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { role: 'user', content: message },
+      { role: 'model', content: '' },
+    ]);
+  
+    setMessage('');
+  
+    try {
+      const response = await fetch('api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formattedMessages),
+      });
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+  
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+  
+        const text = decoder.decode(value || new Uint8Array(), { stream: true });
         result += text;
-        return reader.read().then(processText)
-      })
-      })
-    setMessage('')
-    setIsLoading(false)
-  }
+  
+        setMessages((prevMessages) => {
+          const updatedMessages = [...prevMessages];
+          const lastMessageIndex = updatedMessages.length - 1;
+          updatedMessages[lastMessageIndex] = {
+            ...updatedMessages[lastMessageIndex],
+            content: result,
+          };
+          return updatedMessages;
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  
 
   const handleKeyPress = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -95,10 +113,11 @@ export default function Home() {
       sendMessage();
     }
   };
+
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -106,7 +125,7 @@ export default function Home() {
   }, [messages]);
 
   return (
-    <Box width="100vw" height="100vh" display="flex" flexDirection="column" justifyContent="center" alignItems="center" bgcolor='#0B0C10'>
+    <Box width="100vw" height="100vh" display="flex" flexDirection="column" justifyContent="center" alignItems="center" bgcolor="#0B0C10">
       <Stack direction="column" width="500px" height="700px" border="1px" p={2} spacing={3} sx={{ borderRadius: '16px', borderColor: '#66FCF1' }}>
         <Stack direction="row" width="467px" height="70px" bgcolor="#45A29E" spacing={1} alignItems="center" padding={2} sx={{ borderRadius: '16px' }}>
           <Box width="50px" height="46px">
@@ -114,14 +133,16 @@ export default function Home() {
               <Avatar src="/modelavatar.jpg" />
             </StyledBadge>
           </Box>
-          <Typography color='#0b0c10' variant='h5'>Obi, The RateMyProfessor Expert</Typography>
+          <Typography color="#0b0c10" variant="h5">
+            Obi, The RateMyProfessor Expert
+          </Typography>
         </Stack>
         <Stack direction="column" spacing={2} flexGrow={1} overflow="auto" maxHeight="100%">
           {messages.map((msg, index) => (
             <Box key={index} display="flex" justifyContent={msg.role === 'Obi' ? 'flex-start' : 'flex-end'}>
-              <Stack direction={msg.role === 'Obi' ? 'row' : 'row-reverse'}>
-                <Avatar src={msg.role === 'Obi' ? '/modelavatar.jpg' : aImage} />
-                <Box bgcolor={msg.role === 'Obi' ? '#9ef7f1' : '#C5C6C7'} color="#1F2833" borderRadius={1} p={3}>
+              <Stack direction={msg.role === 'model' ? 'row' : 'row-reverse'}>
+                <Avatar src={msg.role === 'model' ? '/modelavatar.jpg' : aImage} />
+                <Box bgcolor={msg.role === 'model' ? '#9ef7f1' : '#C5C6C7'} color="#1F2833" borderRadius={1} p={3}>
                   <Markdown>{msg.content}</Markdown>
                 </Box>
               </Stack>
@@ -143,7 +164,7 @@ export default function Home() {
               '& .MuiInputLabel-root': { color: '#C5C6C7' },
               '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': { borderColor: '#C5C6C7' },
               '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#00d1c4' },
-              '& .MuiInputLabel-root.Mui-focused': { color: '#00d1c4' }
+              '& .MuiInputLabel-root.Mui-focused': { color: '#00d1c4' },
             }}
           />
           <Button
@@ -155,24 +176,6 @@ export default function Home() {
             <SendIcon />
           </Button>
         </Stack>
-        {/*{!session ? (
-          <Button
-            onClick={() => signIn('google')}
-            startIcon={<GoogleIcon />}
-            variant="contained"
-            sx={{ color: '#0B0C10', backgroundColor: '#C5C6C7', '&:hover': { backgroundColor: '#00d1c4' } }}
-          >
-            Sign In With Google
-          </Button>
-        ) : (
-          <Button
-            onClick={() => signOut()}
-            variant="contained"
-            sx={{ color: '#C5C6C7', backgroundColor: '#00635d', '&:hover': { backgroundColor: '#00d1c4' } }}
-          >
-            Sign Out
-          </Button>
-        )}*/}
       </Stack>
     </Box>
   );

@@ -15,7 +15,8 @@ export async function POST(req){
         apiKey: process.env.PINECONE_API_KEY
     })
     const index = pc.index('rag').namespace('ns1')
-    const text = data[data.length - 1].content
+    const text = data[data.length - 1].parts
+    console.log(text)
     const response = await embedModel.embedContent(text);
     const embedding = response['embedding']
     const results = await index.query({
@@ -37,7 +38,7 @@ export async function POST(req){
 
     const lastMessage = data[data.length - 1]
     const lastMcontent = lastMessage.content + resultString
-    const lastdata = data.slice(0,data.length-2)
+    const lastdata = data.slice(0,data.length-1)
     const chat = model.startChat({
         history: [
           ...lastdata, 
