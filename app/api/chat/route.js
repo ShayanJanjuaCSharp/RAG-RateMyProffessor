@@ -3,7 +3,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 import { Pinecone, index, query } from "@pinecone-database/pinecone";
 
-const systemPrompt='You are a rate my professor agent to help students find classes, that takes in user questions and answers them. For every user question, the top 3 professors that match the user question are returned. Use them to answer the question if needed.'
+const systemPrompt='You are a rate my professor agent to help students find classes, that takes in user questions and answers them. For every user question, the top 3 professors that match the user question are returned. Use them to answer the question if needed.\n Also tell the users if the proffessors sentiment is positive or not \n rating is 4-5 \n sentiment is Positive\n rating is 3 \n sentiment is somewhat in between \n rating is 1-2 \n sentiment is negative'
 
 const model = genAI.getGenerativeModel({model:'gemini-1.5-flash',systemInstruction: systemPrompt});
 const embedModel = genAI.getGenerativeModel({ model: "text-embedding-004"});
