@@ -40,7 +40,6 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 
 
 export default function Home() {
-  const axios = require('axios')
   const [messages, setMessages] = useState([
     {
       role: 'model',
@@ -48,7 +47,6 @@ export default function Home() {
     }
   ]);
   const [message, setMessage] = useState('');
-  const [u, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [aImage, setImage] = useState('/user.png');
 
@@ -88,6 +86,7 @@ export default function Home() {
         if (done) break;
   
         const text = decoder.decode(value || new Uint8Array(), { stream: true });
+        
         result += text;
   
         setMessages((prevMessages) => {
@@ -126,41 +125,8 @@ export default function Home() {
     scrollToBottom();
   }, [messages]);
 
-  const embed = async() =>{
-    setIsLoading(true)
-    try {
-      // Request Reddit URL and "await" the response
-      const response = await axios.get(
-        'https://api.codetabs.com/v1/proxy?quest=' + u
-      )
-  
-      // Print the response, once available and get() returned
-      console.log(response)
-      const r = await fetch('api/scrapes',{
-        method:'POST',
-        body: response.data
-      })
-
-      const res = await fetch('api/embed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(r),
-      });
-    
-
-    } catch (error) {
-      console.error(error)
-    }
-    setIsLoading(false)
-    return null
-  }
-
   return (
     <Box width="100vw" height="100vh" display="flex" flexDirection="column" justifyContent="center" alignItems="center" bgcolor="#0B0C10">
-      <Stack direction={'row'}>
-        <Box width={'50vw'} height={'100vh'} flexDirection="column" justifyContent="center" alignItems="center">
       <Stack direction="column" width="500px" height="700px" border="1px" p={2} spacing={3} sx={{ borderRadius: '16px', borderColor: '#66FCF1' }}>
         <Stack direction="row" width="467px" height="70px" bgcolor="#45A29E" spacing={1} alignItems="center" padding={2} sx={{ borderRadius: '16px' }}>
           <Box width="50px" height="46px">
@@ -211,34 +177,6 @@ export default function Home() {
             <SendIcon />
           </Button>
         </Stack>
-      </Stack>
-      </Box>
-      <Box width={'50vw'} height={'100vh'} justifyContent="center" alignItems="center">
-      <TextField
-            label="Message"
-            fullWidth
-            value={u}
-            placeholder='Say "Hello" to begin chatting!'
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={isLoading}
-            sx={{
-              '& .MuiInputBase-input': { color: '#C5C6C7' },
-              '& .MuiInputLabel-root': { color: '#C5C6C7' },
-              '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': { borderColor: '#C5C6C7' },
-              '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#00d1c4' },
-              '& .MuiInputLabel-root.Mui-focused': { color: '#00d1c4' },
-            }}
-          />
-          <Button
-            variant="contained"
-            onClick={embed}
-            disabled={isLoading}
-            sx={{ bgcolor: '#00635d', color: '#C5C6C7', '&:hover': { backgroundColor: '#00d1c4' } }}
-          >
-            <SendIcon />
-          </Button>
-      </Box>
       </Stack>
     </Box>
   );
